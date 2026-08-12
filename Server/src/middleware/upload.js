@@ -26,7 +26,7 @@ const imageOrPdfFilter = (req, file, cb) => {
 export const uploadAvatar = multer({
   storage,
   fileFilter: imageFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  limits: { fileSize: 4 * 1024 * 1024 }, // 4MB
 }).single("avatar");
 
 export const uploadAttachment = multer({
