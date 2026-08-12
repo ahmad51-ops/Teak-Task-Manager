@@ -176,9 +176,11 @@ export const updateTask = async (taskId, user, updates) => {
 
   const project = await loadProjectOrThrow(task.project);
   const isCreator = task.createdBy.toString() === user._id.toString();
-  const isAssignee = task.assignee && task.assignee.toString() === user._id.toString();
-  if (!isCreator && !isAssignee && !canManageProject(project, user)) {
-    throw new ApiError(403, "You do not have permission to edit this task");
+  // Being the assignee no longer grants edit rights on its own — a
+  // member assigned a task an admin created shouldn't be able to
+  // change its details, only the creator (or admin/manager) can.
+  if (!isCreator && !["admin", "manager"].includes(user.role)) {
+    throw new ApiError(403, "Only the task creator or an admin/manager can edit this task");
   }
 
   const allowedFields = ["title", "description", "priority", "dueDate", "tags"];
@@ -216,10 +218,13 @@ export const deleteTask = async (taskId, user) => {
   const task = await Task.findById(taskId);
   if (!task) throw new ApiError(404, "Task not found");
 
-  const project = await loadProjectOrThrow(task.project);
+  // Confirms the project still exists (data-integrity check, same as
+  // every other task action) — no longer needed for the permission
+  // decision itself, which is now purely global-role-based.
+  await loadProjectOrThrow(task.project);
   const isCreator = task.createdBy.toString() === user._id.toString();
-  if (!isCreator && !canManageProject(project, user)) {
-    throw new ApiError(403, "Only the task creator or a project manager can delete this task");
+  if (!isCreator && !["admin", "manager"].includes(user.role)) {
+    throw new ApiError(403, "Only the task creator or an admin/manager can delete this task");
   }
 
   await task.deleteOne();

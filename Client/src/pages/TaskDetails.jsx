@@ -109,11 +109,14 @@ const TaskDetails = () => {
           canManageAttachments: false,
         };
       }
-      const editDetails =
-        task.createdBy?._id === user?._id ||
-        task.assignee?._id === user?._id ||
-        isProjectManager(project, user);
-      const del = task.createdBy?._id === user?._id || isProjectManager(project, user);
+      // Edit/delete: the task's creator, or a global admin/manager —
+      // matching taskService.js's updateTask/deleteTask exactly. Being
+      // the assignee no longer grants edit rights on its own (a member
+      // assigned a task an admin created shouldn't be able to change
+      // it), and neither does project owner/admin status by itself.
+      const isCreator = task.createdBy?._id === user?._id;
+      const editDetails = isCreator || canManageWorkspace(user);
+      const del = isCreator || canManageWorkspace(user);
       const changeStatus = isProjectMember(project, user);
       // Assigning (including claiming an unassigned task) is gated on
       // global role alone (admin/manager) — project ownership/admin
