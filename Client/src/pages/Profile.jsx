@@ -4,6 +4,7 @@ import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import Avatar from "../components/ui/Avatar";
+import PasswordInput from "../components/ui/PasswordInput";
 import { useAuth } from "../hooks/useAuth";
 import { useUpdateProfile, useUploadAvatar, useChangePassword } from "../hooks/useProfileMutations";
 import { required, getPasswordStrengthError } from "../utils/validators";
@@ -218,8 +219,7 @@ const Profile = () => {
             <label className="mb-1.5 block text-sm font-medium text-ink-muted">
               Current password
             </label>
-            <input
-              type="password"
+            <PasswordInput
               value={pwForm.currentPassword}
               onChange={(e) => setPwForm((f) => ({ ...f, currentPassword: e.target.value }))}
               className={inputClass}
@@ -227,8 +227,7 @@ const Profile = () => {
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-ink-muted">New password</label>
-            <input
-              type="password"
+            <PasswordInput
               placeholder="At least 8 characters, including a letter"
               value={pwForm.newPassword}
               onChange={(e) => setPwForm((f) => ({ ...f, newPassword: e.target.value }))}
@@ -242,8 +241,7 @@ const Profile = () => {
             <label className="mb-1.5 block text-sm font-medium text-ink-muted">
               Confirm new password
             </label>
-            <input
-              type="password"
+            <PasswordInput
               value={pwForm.confirmPassword}
               onChange={(e) => setPwForm((f) => ({ ...f, confirmPassword: e.target.value }))}
               className={inputClass}

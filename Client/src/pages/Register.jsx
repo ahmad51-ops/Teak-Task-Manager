@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserPlus, Loader2, AlertCircle } from "lucide-react";
 import Button from "../components/ui/Button";
+import PasswordInput from "../components/ui/PasswordInput";
 import { useAuth } from "../hooks/useAuth";
 import GoogleSignInButton from "../components/auth/GoogleSignInButton";
 import { isValidEmail, required, getPasswordStrengthError } from "../utils/validators";
@@ -145,10 +146,9 @@ const Register = () => {
           <label className="mb-2 block text-[15px] font-medium text-ink-muted" htmlFor="password">
             Password
           </label>
-          <input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="new-password"
             value={form.password}
             onChange={handleChange}
@@ -167,10 +167,9 @@ const Register = () => {
           >
             Confirm password
           </label>
-          <input
+          <PasswordInput
             id="confirmPassword"
             name="confirmPassword"
-            type="password"
             autoComplete="new-password"
             value={form.confirmPassword}
             onChange={handleChange}

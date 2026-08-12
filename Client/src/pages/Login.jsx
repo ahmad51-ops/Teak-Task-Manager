@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogIn, Loader2, AlertCircle } from "lucide-react";
 import Button from "../components/ui/Button";
+import PasswordInput from "../components/ui/PasswordInput";
 import { useAuth } from "../hooks/useAuth";
 import GoogleSignInButton from "../components/auth/GoogleSignInButton";
 import { isValidEmail } from "../utils/validators";
@@ -135,10 +136,9 @@ const Login = () => {
           <label className="mb-2 block text-[15px] font-medium text-ink-muted" htmlFor="password">
             Password
           </label>
-          <input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="current-password"
             value={form.password}
             onChange={handleChange}
