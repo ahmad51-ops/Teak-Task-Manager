@@ -35,11 +35,17 @@ const userSchema = new mongoose.Schema(
     },
     // Google's stable user identifier ("sub" in the ID token). Sparse
     // unique index: unique among accounts that HAVE one, while allowing
-    // any number of password-only accounts where it's absent. A plain
-    // unique index would reject the second null.
+    // any number of password-only accounts where it's absent.
+    //
+    // No `default` here deliberately — a sparse index only excludes
+    // documents where the field is truly ABSENT, not documents where
+    // it's present-but-null. `default: null` would make every
+    // password-only signup explicitly store `googleId: null`, which
+    // DOES get an index entry — so the second such account ever
+    // created would collide with the first on a "duplicate key" error,
+    // no matter what email either one used.
     googleId: {
       type: String,
-      default: null,
       unique: true,
       sparse: true,
     },
