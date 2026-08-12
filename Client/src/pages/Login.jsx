@@ -10,6 +10,7 @@ const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [fieldErrors, setFieldErrors] = useState({});
   const [serverError, setServerError] = useState("");
+  const [unverifiedEmail, setUnverifiedEmail] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { login, loginWithGoogle } = useAuth();
@@ -39,9 +40,14 @@ const Login = () => {
       const redirectTo = location.state?.from?.pathname || "/dashboard";
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setServerError(
-        err.response?.data?.message || "Something went wrong signing you in. Try again."
-      );
+      const message = err.response?.data?.message || "Something went wrong signing you in. Try again.";
+      setServerError(message);
+      // The only 403 login can return with this specific wording is the
+      // unverified-account case (authService.loginUser) — text-matching
+      // it is a little loose, but it's the only signal the API gives,
+      // and it's what lets this page route them straight to the one
+      // place (VerifyEmail) they can actually resolve it from.
+      setUnverifiedEmail(message.includes("verify your email") ? form.email : null);
     } finally {
       setIsSubmitting(false);
     }
@@ -83,7 +89,21 @@ const Login = () => {
       {serverError && (
         <div className="mb-6 flex items-start gap-2.5 rounded-lg border border-rose-neon/30 bg-rose-neon/10 px-4 py-3.5 text-sm text-rose-neon">
           <AlertCircle size={17} className="mt-0.5 shrink-0" />
-          <span>{serverError}</span>
+          <span>
+            {serverError}
+            {unverifiedEmail && (
+              <>
+                {" "}
+                <Link
+                  to="/verify-email"
+                  state={{ email: unverifiedEmail }}
+                  className="font-medium underline"
+                >
+                  Verify it now
+                </Link>
+              </>
+            )}
+          </span>
         </div>
       )}
 

@@ -7,8 +7,15 @@ import {
   refreshAccessToken,
   logout,
   getMe,
+  verifyEmailController,
+  resendVerification,
 } from "../controllers/authController.js";
-import { registerValidator, loginValidator } from "../validators/authValidator.js";
+import {
+  registerValidator,
+  loginValidator,
+  verifyEmailValidator,
+  resendVerificationValidator,
+} from "../validators/authValidator.js";
 import { validate } from "../middleware/validate.js";
 import { protect } from "../middleware/auth.js";
 
@@ -18,6 +25,8 @@ const router = Router();
 router.get("/config", getAuthConfig);
 
 router.post("/register", registerValidator, validate, register);
+router.post("/verify-email", verifyEmailValidator, validate, verifyEmailController);
+router.post("/resend-verification", resendVerificationValidator, validate, resendVerification);
 router.post("/login", loginValidator, validate, login);
 router.post("/google", googleLogin);
 router.post("/refresh-token", refreshAccessToken);

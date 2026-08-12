@@ -1,5 +1,11 @@
 import jwt from "jsonwebtoken";
-import { registerUser, loginUser, loginWithGoogle } from "../services/authService.js";
+import {
+  registerUser,
+  loginUser,
+  loginWithGoogle,
+  verifyEmail,
+  resendVerificationCode,
+} from "../services/authService.js";
 import { generateAccessToken } from "../utils/generateToken.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -20,9 +26,30 @@ const refreshCookieOptions = {
 };
 
 export const register = asyncHandler(async (req, res) => {
-  const { user, accessToken, refreshToken } = await registerUser(req.body);
+  const result = await registerUser(req.body);
+
+  // Verification enabled: no account is logged in yet — registerUser
+  // returned { pendingVerification, email } instead of tokens.
+  if (result.pendingVerification) {
+    return res
+      .status(201)
+      .json(new ApiResponse(201, result, "Check your email for a verification code"));
+  }
+
+  const { user, accessToken, refreshToken } = result;
   res.cookie("refreshToken", refreshToken, refreshCookieOptions);
   res.status(201).json(new ApiResponse(201, { user, accessToken }, "Registered successfully"));
+});
+
+export const verifyEmailController = asyncHandler(async (req, res) => {
+  const { user, accessToken, refreshToken } = await verifyEmail(req.body);
+  res.cookie("refreshToken", refreshToken, refreshCookieOptions);
+  res.status(200).json(new ApiResponse(200, { user, accessToken }, "Email verified"));
+});
+
+export const resendVerification = asyncHandler(async (req, res) => {
+  await resendVerificationCode(req.body.email);
+  res.status(200).json(new ApiResponse(200, {}, "Verification code sent"));
 });
 
 export const login = asyncHandler(async (req, res) => {

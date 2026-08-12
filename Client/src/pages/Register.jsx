@@ -43,8 +43,12 @@ const Register = () => {
 
     setIsSubmitting(true);
     try {
-      await register({ name: form.name, email: form.email, password: form.password });
-      navigate("/dashboard", { replace: true });
+      const result = await register({ name: form.name, email: form.email, password: form.password });
+      if (result?.pendingVerification) {
+        navigate("/verify-email", { state: { email: result.email }, replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err) {
       setServerError(
         err.response?.data?.message || "Something went wrong creating your account. Try again."

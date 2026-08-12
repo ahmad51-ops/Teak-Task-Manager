@@ -16,6 +16,7 @@ import NotFound from "../pages/NotFound";
 // navbar) on every navigation instead of just the content area.
 const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
+const VerifyEmail = lazy(() => import("../pages/VerifyEmail"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Projects = lazy(() => import("../pages/Projects"));
 const ProjectDetails = lazy(() => import("../pages/ProjectDetails"));
@@ -30,6 +31,7 @@ const AppRoutes = () => (
     <Route element={<AuthLayout />}>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
     </Route>
 
     <Route element={<PrivateRoute />}>

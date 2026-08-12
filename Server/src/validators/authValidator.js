@@ -19,6 +19,20 @@ export const registerValidator = [
   passwordRule("password"),
 ];
 
+export const verifyEmailValidator = [
+  body("email").isEmail().withMessage("Please provide a valid email").normalizeEmail(),
+  body("code")
+    .trim()
+    .isLength({ min: 6, max: 6 })
+    .withMessage("Enter the 6-digit code")
+    .isNumeric()
+    .withMessage("The code is numeric"),
+];
+
+export const resendVerificationValidator = [
+  body("email").isEmail().withMessage("Please provide a valid email").normalizeEmail(),
+];
+
 export const loginValidator = [
   body("email").isEmail().withMessage("Please provide a valid email").normalizeEmail(),
   // Deliberately no strength rule on login — an existing account may

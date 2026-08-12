@@ -63,6 +63,27 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Google accounts skip this entirely (Google already confirmed
+    // ownership of the email — see loginWithGoogle) — it only gates
+    // password signups, and only when EMAIL_USER/EMAIL_APP_PASSWORD are
+    // configured (isEmailVerificationEnabled in env.js). Unverified
+    // accounts can't log in (see authService.loginUser).
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    // Hashed, never the raw code — same reasoning as storing a hashed
+    // password: a DB leak shouldn't hand out valid verification codes.
+    emailVerificationCodeHash: {
+      type: String,
+      select: false,
+      default: null,
+    },
+    emailVerificationExpires: {
+      type: Date,
+      select: false,
+      default: null,
+    },
     // Presence: written on socket disconnect (see sockets/socket.js).
     // "Currently online" is tracked in memory rather than here — writing
     // to Mongo on every connect would be a pointless write, and a stale

@@ -1,8 +1,10 @@
+import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
-import { env, isGoogleAuthEnabled } from "../config/env.js";
+import { sendVerificationEmail } from "../utils/sendEmail.js";
+import { env, isGoogleAuthEnabled, isEmailVerificationEnabled } from "../config/env.js";
 
 const googleClient = isGoogleAuthEnabled ? new OAuth2Client(env.google.clientId) : null;
 
@@ -12,14 +14,90 @@ const issueTokens = (user) => ({
   refreshToken: generateRefreshToken(user._id),
 });
 
+const CODE_TTL_MS = 15 * 60 * 1000;
+
+const hashCode = (code) => crypto.createHash("sha256").update(code).digest("hex");
+
+// randomInt's upper bound is exclusive, so this is always exactly 6 digits
+// (100000-999999) — never a shorter number that would need zero-padding.
+const generateCode = () => String(crypto.randomInt(100000, 1000000));
+
+const issueVerificationCode = async (user) => {
+  const code = generateCode();
+  user.emailVerificationCodeHash = hashCode(code);
+  user.emailVerificationExpires = new Date(Date.now() + CODE_TTL_MS);
+  await user.save();
+  await sendVerificationEmail(user.email, code);
+};
+
 export const registerUser = async ({ name, email, password }) => {
   const existing = await User.findOne({ email });
+
   if (existing) {
+    // Someone abandoned signup before entering their code — resend to
+    // the same unverified account instead of permanently blocking the
+    // real owner from ever completing registration with this email.
+    if (!existing.isEmailVerified && isEmailVerificationEnabled) {
+      await issueVerificationCode(existing);
+      return { pendingVerification: true, email: existing.email };
+    }
     throw new ApiError(409, "An account with this email already exists");
   }
 
-  const user = await User.create({ name, email, password });
+  const user = await User.create({
+    name,
+    email,
+    password,
+    isEmailVerified: !isEmailVerificationEnabled,
+  });
+
+  if (isEmailVerificationEnabled) {
+    await issueVerificationCode(user);
+    return { pendingVerification: true, email: user.email };
+  }
+
   return issueTokens(user);
+};
+
+export const verifyEmail = async ({ email, code }) => {
+  const user = await User.findOne({ email }).select(
+    "+emailVerificationCodeHash +emailVerificationExpires"
+  );
+  if (!user) {
+    throw new ApiError(404, "No account found for this email");
+  }
+  if (user.isEmailVerified) {
+    throw new ApiError(400, "This email is already verified — just log in");
+  }
+  if (!user.emailVerificationExpires || user.emailVerificationExpires < new Date()) {
+    throw new ApiError(400, "That code has expired — request a new one");
+  }
+  if (hashCode(code) !== user.emailVerificationCodeHash) {
+    throw new ApiError(400, "That code doesn't match — check and try again");
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationCodeHash = null;
+  user.emailVerificationExpires = null;
+  await user.save();
+
+  return issueTokens(user);
+};
+
+export const resendVerificationCode = async (email) => {
+  if (!isEmailVerificationEnabled) {
+    throw new ApiError(503, "Email verification is not configured on this server");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(404, "No account found for this email");
+  }
+  if (user.isEmailVerified) {
+    throw new ApiError(400, "This email is already verified — just log in");
+  }
+
+  await issueVerificationCode(user);
 };
 
 export const loginUser = async ({ email, password }) => {
@@ -45,6 +123,13 @@ export const loginUser = async ({ email, password }) => {
 
   if (!user.isActive) {
     throw new ApiError(403, "This account has been deactivated");
+  }
+
+  if (isEmailVerificationEnabled && !user.isEmailVerified) {
+    throw new ApiError(
+      403,
+      "Please verify your email before signing in — check your inbox for the code, or request a new one"
+    );
   }
 
   return issueTokens(user);
@@ -94,16 +179,23 @@ export const loginWithGoogle = async (credential) => {
     if (!user.isActive) throw new ApiError(403, "This account has been deactivated");
     user.googleId = googleId;
     if (!user.avatar && picture) user.avatar = picture;
+    // Google just confirmed ownership of this email (checked above) —
+    // that supersedes whatever the password-signup verification flow
+    // had pending, including an abandoned/unverified account.
+    user.isEmailVerified = true;
     await user.save();
     return issueTokens(user);
   }
 
-  // 3. Brand-new user
+  // 3. Brand-new user — Google's emailVerified check above already
+  // confirms this address is real, so there's nothing for the
+  // code-based flow to add here.
   user = await User.create({
     name: name || email.split("@")[0],
     email,
     googleId,
     avatar: picture || "",
+    isEmailVerified: true,
   });
 
   return issueTokens(user);

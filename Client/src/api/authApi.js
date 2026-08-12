@@ -1,9 +1,25 @@
 import api, { setAccessToken } from "./axios";
 
+// Two possible outcomes, both surfaced to the caller: verification
+// enabled -> { pendingVerification: true, email }, no session yet.
+// Verification disabled -> a real logged-in user, same as before.
 export const registerUser = async ({ name, email, password }) => {
   const { data } = await api.post("/auth/register", { name, email, password });
+  if (data.data.pendingVerification) {
+    return data.data;
+  }
   setAccessToken(data.data.accessToken);
   return data.data.user;
+};
+
+export const verifyEmail = async ({ email, code }) => {
+  const { data } = await api.post("/auth/verify-email", { email, code });
+  setAccessToken(data.data.accessToken);
+  return data.data.user;
+};
+
+export const resendVerificationCode = async (email) => {
+  await api.post("/auth/resend-verification", { email });
 };
 
 export const loginUser = async ({ email, password }) => {

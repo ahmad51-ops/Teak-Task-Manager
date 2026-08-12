@@ -21,6 +21,10 @@ export const env = {
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
   },
+  email: {
+    user: process.env.EMAIL_USER,
+    appPassword: process.env.EMAIL_APP_PASSWORD,
+  },
 };
 
 const required = ["mongoUri"];
@@ -48,5 +52,16 @@ export const isGoogleAuthEnabled = Boolean(env.google.clientId);
 if (!isGoogleAuthEnabled && env.nodeEnv === "development") {
   console.warn(
     "GOOGLE_CLIENT_ID not set — Google sign-in is disabled. Email/password login still works."
+  );
+}
+
+// Same "optional, warn, degrade gracefully" treatment as Google above —
+// deliberately NOT in the required list. Without it, new accounts skip
+// straight to isEmailVerified: true (today's behavior) instead of the
+// server crashing on boot or registration erroring for everyone.
+export const isEmailVerificationEnabled = Boolean(env.email.user && env.email.appPassword);
+if (!isEmailVerificationEnabled) {
+  console.warn(
+    "EMAIL_USER/EMAIL_APP_PASSWORD not set — email verification is disabled. New accounts are auto-verified."
   );
 }

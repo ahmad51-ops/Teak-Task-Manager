@@ -25,9 +25,21 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const register = useCallback(async (payload) => {
-    const newUser = await authApi.registerUser(payload);
-    setUser(newUser);
-    return newUser;
+    const result = await authApi.registerUser(payload);
+    // Verification enabled: result is { pendingVerification: true, email }
+    // and there's no session to store yet — Register.jsx routes to the
+    // verify-email screen instead of the dashboard based on this shape.
+    if (result.pendingVerification) {
+      return result;
+    }
+    setUser(result);
+    return result;
+  }, []);
+
+  const verifyEmail = useCallback(async (payload) => {
+    const verifiedUser = await authApi.verifyEmail(payload);
+    setUser(verifiedUser);
+    return verifiedUser;
   }, []);
 
   const loginWithGoogle = useCallback(async (credential) => {
@@ -52,6 +64,7 @@ export const AuthProvider = ({ children }) => {
     isBootstrapping,
     login,
     register,
+    verifyEmail,
     loginWithGoogle,
     logout,
   };

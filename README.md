@@ -146,6 +146,7 @@ No blueprint? Create the service manually instead: **New → Web Service**, root
 | `JWT_ACCESS_EXPIRES` / `JWT_REFRESH_EXPIRES` | `15m` / `7d` |
 | `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | From your Cloudinary dashboard |
 | `GOOGLE_CLIENT_ID` | Optional — omit to disable Google sign-in |
+| `EMAIL_USER` / `EMAIL_APP_PASSWORD` | Optional — omit to disable email verification (new accounts are auto-verified instead). A Gmail address + an [App Password](https://myaccount.google.com/apppasswords) generated for it (requires 2-Step Verification on that Google account first) — not the account's normal password. |
 | `CLIENT_URL` | Your Vercel URL, e.g. `https://team-task-manager.vercel.app` — no trailing slash. You'll only know this after step 2, so deploy the backend once, do the frontend, then come back and set this (Render redeploys automatically on env var changes). |
 
 ## 2. Frontend on Vercel
