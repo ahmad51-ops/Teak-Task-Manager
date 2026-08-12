@@ -35,9 +35,11 @@ const issueVerificationCode = async (user) => {
   // itself hang, when the account is already fully created at this
   // point. A failed send just means the user needs "Resend it" — it
   // shouldn't fail the request that got them this far.
-  sendVerificationEmail(user.email, code).catch((err) => {
-    console.error(`Failed to send verification email to ${user.email}: ${err.message}`);
-  });
+  sendVerificationEmail(user.email, code)
+    .then(() => console.log(`Verification email accepted for delivery to ${user.email}`))
+    .catch((err) => {
+      console.error(`Failed to send verification email to ${user.email}: ${err.message}`);
+    });
 };
 
 export const registerUser = async ({ name, email, password }) => {
