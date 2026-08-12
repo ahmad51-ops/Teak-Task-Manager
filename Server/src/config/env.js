@@ -22,8 +22,12 @@ export const env = {
     clientId: process.env.GOOGLE_CLIENT_ID,
   },
   email: {
-    user: process.env.EMAIL_USER,
-    appPassword: process.env.EMAIL_APP_PASSWORD,
+    resendApiKey: process.env.RESEND_API_KEY,
+    // Resend's shared address — works with zero setup, but only for
+    // sending TO the email you signed up to Resend with. Verifying a
+    // real domain (Resend dashboard) lifts that and lets this be a
+    // proper "yourapp.com" address too — see sendEmail.js.
+    from: process.env.EMAIL_FROM || "onboarding@resend.dev",
   },
 };
 
@@ -59,9 +63,9 @@ if (!isGoogleAuthEnabled && env.nodeEnv === "development") {
 // deliberately NOT in the required list. Without it, new accounts skip
 // straight to isEmailVerified: true (today's behavior) instead of the
 // server crashing on boot or registration erroring for everyone.
-export const isEmailVerificationEnabled = Boolean(env.email.user && env.email.appPassword);
+export const isEmailVerificationEnabled = Boolean(env.email.resendApiKey);
 if (!isEmailVerificationEnabled) {
   console.warn(
-    "EMAIL_USER/EMAIL_APP_PASSWORD not set — email verification is disabled. New accounts are auto-verified."
+    "RESEND_API_KEY not set — email verification is disabled. New accounts are auto-verified."
   );
 }

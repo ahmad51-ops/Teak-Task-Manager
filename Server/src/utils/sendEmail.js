@@ -1,33 +1,27 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { env, isEmailVerificationEnabled } from "../config/env.js";
 
-// Gmail SMTP via an App Password (not the account password — requires
-// 2-Step Verification enabled on the Google account, then a 16-char
-// app password generated at myaccount.google.com/apppasswords). Good
-// enough for this app's volume; a dedicated transactional email
-// provider would be the move if sending volume ever became a problem.
-const transporter = isEmailVerificationEnabled
-  ? nodemailer.createTransport({
-      service: "gmail",
-      auth: { user: env.email.user, pass: env.email.appPassword },
-      // Node's default socket timeout is effectively "forever" — without
-      // these, a network hiccup between Render and Gmail leaves sendMail
-      // hanging indefinitely instead of failing fast. Callers (authService)
-      // don't await this anyway, but a bounded failure still matters for
-      // logging and for not leaking an open connection.
-      connectionTimeout: 10_000,
-      greetingTimeout: 10_000,
-      socketTimeout: 10_000,
-    })
-  : null;
+// Switched off Gmail SMTP after confirming via Render's own logs that
+// outbound SMTP is unusable on this host — first ENETUNREACH (fixed by
+// forcing IPv4 in server.js), then a hard connection timeout on port
+// 465 regardless. That's the signature of the platform blocking
+// outbound SMTP ports outright (standard anti-spam-abuse practice on
+// free hosting tiers), not a credentials or routing problem — no SMTP
+// provider would have worked here. Resend's API rides over plain
+// HTTPS instead, which isn't subject to that block.
+const resend = isEmailVerificationEnabled ? new Resend(env.email.resendApiKey) : null;
 
 export const sendVerificationEmail = async (to, code) => {
   // Callers only invoke this when isEmailVerificationEnabled is already
   // true (see authService.js) — this guard is just defense in depth.
-  if (!transporter) return;
+  if (!resend) return;
 
-  await transporter.sendMail({
-    from: `"Team Task Manager" <${env.email.user}>`,
+  // resend.emails.send() resolves with { data, error } rather than
+  // rejecting on failure — throwing here keeps the existing
+  // .catch(...) in authService.js's fire-and-forget call working the
+  // same way it did for nodemailer.
+  const { error } = await resend.emails.send({
+    from: `Team Task Manager <${env.email.from}>`,
     to,
     subject: "Verify your email — Team Task Manager",
     html: `
@@ -39,4 +33,8 @@ export const sendVerificationEmail = async (to, code) => {
       </div>
     `,
   });
+
+  if (error) {
+    throw new Error(error.message || "Resend API error");
+  }
 };
