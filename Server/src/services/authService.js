@@ -45,14 +45,11 @@ const issueVerificationCode = async (user) => {
 export const registerUser = async ({ name, email, password }) => {
   const existing = await User.findOne({ email });
 
+  // Blanket block, verified or not — an unverified account that never
+  // got its code still owns this email; the way back in for it is
+  // /verify-email's own "Resend it" (resendVerificationCode below), not
+  // a second trip through registration.
   if (existing) {
-    // Someone abandoned signup before entering their code — resend to
-    // the same unverified account instead of permanently blocking the
-    // real owner from ever completing registration with this email.
-    if (!existing.isEmailVerified && isEmailVerificationEnabled) {
-      await issueVerificationCode(existing);
-      return { pendingVerification: true, email: existing.email };
-    }
     throw new ApiError(409, "An account with this email already exists");
   }
 
