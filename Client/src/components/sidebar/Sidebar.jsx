@@ -24,7 +24,15 @@ const NAV_ITEMS = [
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
-const NavList = ({ collapsed, onNavigate, items }) => (
+// pillLayoutId must differ between the two NavList instances below (desktop
+// <aside> vs. mobile drawer) — they're both mounted simultaneously (the
+// desktop one just sits behind `hidden md:flex`, not unmounted), and Framer
+// Motion's layoutId tracking assumes only one mounted instance per id. With
+// a shared id, opening the mobile drawer meant two elements sharing one
+// layoutId at once — one of them inside a display:none, zero-size ancestor
+// — which corrupted Framer Motion's layout measurement badly enough on iOS
+// Safari to leave the page fully unresponsive to taps until reloaded.
+const NavList = ({ collapsed, onNavigate, items, pillLayoutId }) => (
   <nav className="flex-1 space-y-1 px-3">
     {items.map(({ to, label, icon: Icon }) => (
       <NavLink
@@ -43,7 +51,7 @@ const NavList = ({ collapsed, onNavigate, items }) => (
           <>
             {isActive && (
               <motion.span
-                layoutId="active-nav-pill"
+                layoutId={pillLayoutId}
                 className="absolute inset-0 rounded-lg border border-cyan-neon/30 bg-surface-2 shadow-glow-cyan-sm"
                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
               />
@@ -84,7 +92,7 @@ const Sidebar = ({ collapsed, mobileOpen, onCloseMobile }) => {
       >
         <div className="pointer-events-none absolute left-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-cyan-neon/50 to-transparent" />
         <Logo collapsed={collapsed} />
-        <NavList collapsed={collapsed} items={items} />
+        <NavList collapsed={collapsed} items={items} pillLayoutId="active-nav-pill-desktop" />
       </aside>
 
       <AnimatePresence>
@@ -114,7 +122,12 @@ const Sidebar = ({ collapsed, mobileOpen, onCloseMobile }) => {
                   <X size={20} />
                 </button>
               </div>
-              <NavList collapsed={false} onNavigate={onCloseMobile} items={items} />
+              <NavList
+                collapsed={false}
+                onNavigate={onCloseMobile}
+                items={items}
+                pillLayoutId="active-nav-pill-mobile"
+              />
             </motion.aside>
           </>
         )}
