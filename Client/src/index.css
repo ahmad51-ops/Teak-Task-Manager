@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-surface-3;
+  }
+
+  html {
+    color-scheme: dark;
+    /* Root size drives every rem-based Tailwind class (spacing, type,
+       borders), so this scales the whole UI at once rather than
+       patching sizes file by file.
+
+       It MUST be responsive: 19px was set for desktop legibility, but
+       applying that on a 375px phone inflates every padding and gap by
+       ~19% on a screen that has no room to spare — which is exactly
+       what pushed content off the right edge. Phones get the browser
+       default, and the bump only kicks in once there's width for it. */
+    font-size: 16px;
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 18px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    html {
+      font-size: 19px;
+    }
+  }
+
+  body {
+    @apply bg-void text-ink-primary font-body antialiased;
+    /* Belt-and-braces: nothing should ever cause sideways scrolling on
+       a phone. If some future element does overflow, this contains it
+       rather than letting the whole page shift. */
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+
+  /* Visible keyboard focus everywhere — never remove this without a replacement */
+  :focus-visible {
+    outline: 2px solid #4cf3e8;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: rgba(76, 243, 232, 0.25);
+    color: #e8edf4;
+  }
+
+  /* Thin, neon-tinted scrollbar — small detail, fits the theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0b0e14;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #232b39;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2f3949;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Glass panel — the base surface treatment used across cards, the
+     navbar, and the sidebar. Subtle, not glassmorphism-for-its-own-sake. */
+  .glass-panel {
+    @apply bg-surface/80 backdrop-blur-xl border border-white/[0.06];
+  }
+
+  .neon-text-cyan {
+    text-shadow: 0 0 12px rgba(76, 243, 232, 0.5);
+  }
+
+  .neon-text-violet {
+    text-shadow: 0 0 12px rgba(166, 108, 255, 0.5);
+  }
+
+  /* Signature element: a thin gradient rule that appears under
+     brand/section marks — echoes the sliding glow pill used in nav. */
+  .signal-rule {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-cyan-neon/60 to-transparent;
+  }
+}
