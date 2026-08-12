@@ -95,7 +95,7 @@ const Sidebar = ({ collapsed, mobileOpen, onCloseMobile }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={onCloseMobile}
-              className="fixed inset-0 z-30 bg-void/70 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-30 cursor-pointer bg-void/70 backdrop-blur-sm md:hidden"
             />
             <motion.aside
               initial={{ x: "-100%" }}

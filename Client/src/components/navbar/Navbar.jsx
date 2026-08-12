@@ -80,7 +80,10 @@ const Navbar = ({ onToggleSidebar, onOpenMobileSidebar }) => {
           <AnimatePresence>
             {notifOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)} />
+                <div
+                  className="fixed inset-0 z-10 cursor-pointer"
+                  onClick={() => setNotifOpen(false)}
+                />
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -132,7 +135,10 @@ const Navbar = ({ onToggleSidebar, onOpenMobileSidebar }) => {
           <AnimatePresence>
             {menuOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                <div
+                  className="fixed inset-0 z-10 cursor-pointer"
+                  onClick={() => setMenuOpen(false)}
+                />
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}

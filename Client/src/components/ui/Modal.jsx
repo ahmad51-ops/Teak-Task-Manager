@@ -22,7 +22,7 @@ const Modal = ({ open, onClose, title, children }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-void/80 backdrop-blur-sm"
+            className="absolute inset-0 cursor-pointer bg-void/80 backdrop-blur-sm"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
