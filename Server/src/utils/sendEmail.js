@@ -10,6 +10,14 @@ const transporter = isEmailVerificationEnabled
   ? nodemailer.createTransport({
       service: "gmail",
       auth: { user: env.email.user, pass: env.email.appPassword },
+      // Node's default socket timeout is effectively "forever" — without
+      // these, a network hiccup between Render and Gmail leaves sendMail
+      // hanging indefinitely instead of failing fast. Callers (authService)
+      // don't await this anyway, but a bounded failure still matters for
+      // logging and for not leaking an open connection.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 10_000,
     })
   : null;
 

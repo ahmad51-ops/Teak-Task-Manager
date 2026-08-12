@@ -27,7 +27,17 @@ const issueVerificationCode = async (user) => {
   user.emailVerificationCodeHash = hashCode(code);
   user.emailVerificationExpires = new Date(Date.now() + CODE_TTL_MS);
   await user.save();
-  await sendVerificationEmail(user.email, code);
+
+  // Deliberately NOT awaited — the code is already saved, which is the
+  // part that actually has to succeed before responding. Awaiting an
+  // SMTP round-trip here would mean a slow or flaky mail provider (or a
+  // network hiccup between Render and Gmail) makes "Create account"
+  // itself hang, when the account is already fully created at this
+  // point. A failed send just means the user needs "Resend it" — it
+  // shouldn't fail the request that got them this far.
+  sendVerificationEmail(user.email, code).catch((err) => {
+    console.error(`Failed to send verification email to ${user.email}: ${err.message}`);
+  });
 };
 
 export const registerUser = async ({ name, email, password }) => {
