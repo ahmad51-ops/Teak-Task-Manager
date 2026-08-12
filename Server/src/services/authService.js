@@ -174,7 +174,13 @@ export const loginWithGoogle = async (credential) => {
     throw new ApiError(401, "Could not verify that Google account — please try again");
   }
 
-  const { sub: googleId, email, name, picture, email_verified: emailVerified } = payload;
+  const { sub: googleId, name, picture, email_verified: emailVerified } = payload;
+  // Lowercased to match exactly what a password signup would have
+  // stored (registerValidator's normalizeEmail, plus the schema's own
+  // lowercase:true) — see the comment on EMAIL_NORMALIZE_OPTIONS in
+  // authValidator.js for why this has to line up between both signup
+  // paths, not just each be internally consistent.
+  const email = payload.email.toLowerCase().trim();
 
   if (!emailVerified) {
     throw new ApiError(403, "That Google account's email isn't verified");
