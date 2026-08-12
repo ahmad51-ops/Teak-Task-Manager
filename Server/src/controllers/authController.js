@@ -102,7 +102,13 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
-  res.clearCookie("refreshToken", refreshCookieOptions);
+  // clearCookie needs the same httpOnly/secure/sameSite attributes to
+  // actually match and overwrite the cookie the browser holds — but
+  // NOT maxAge, which Express deprecated here (it already sets its own
+  // immediate-expiry value; passing one just produces a warning as of
+  // Express 4.21+, and will be silently ignored outright in v5).
+  const { maxAge, ...clearCookieOptions } = refreshCookieOptions;
+  res.clearCookie("refreshToken", clearCookieOptions);
   res.status(200).json(new ApiResponse(200, {}, "Logged out successfully"));
 });
 
