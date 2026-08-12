@@ -14,8 +14,16 @@ export const setAccessToken = (token) => {
 
 export const getAccessToken = () => accessToken;
 
+// In local dev, VITE_API_URL is unset and requests go to "/api/v1" on
+// this same origin, which the Vite dev proxy (vite.config.js) forwards
+// to the backend. In production, frontend (Vercel) and backend (Render)
+// are different origins, so this needs the backend's actual URL instead.
+const apiBaseUrl = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : "/api/v1";
+
 const api = axios.create({
-  baseURL: "/api/v1",
+  baseURL: apiBaseUrl,
   withCredentials: true, // required so the httpOnly refreshToken cookie is sent
 });
 

@@ -10,10 +10,12 @@ let socket = null;
 export const connectSocket = () => {
   if (socket?.connected) return socket;
 
-  socket = io("/", {
-    // Vite's dev proxy (vite.config.js) only proxies /api by default;
-    // Socket.io needs its own path but rides the same origin/port, so
-    // no separate proxy entry is required — just point at "/".
+  // In local dev, VITE_API_URL is unset and "/" resolves to this same
+  // origin, which Vite's dev proxy (vite.config.js) forwards to the
+  // backend's socket.io handler. In production, frontend and backend
+  // are different origins (Vercel/Render), so this needs the backend's
+  // actual URL — same variable axios.js uses for REST calls.
+  socket = io(import.meta.env.VITE_API_URL || "/", {
     auth: { token: getAccessToken() },
     withCredentials: true,
     autoConnect: true,

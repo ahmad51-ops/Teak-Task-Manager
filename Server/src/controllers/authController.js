@@ -10,7 +10,12 @@ import { env, isGoogleAuthEnabled } from "../config/env.js";
 const refreshCookieOptions = {
   httpOnly: true,
   secure: env.nodeEnv === "production",
-  sameSite: "strict",
+  // "strict"/"lax" only send the cookie on same-site requests — fine in
+  // dev where frontend and backend share localhost, but frontend
+  // (Vercel) and backend (Render) are different origins in production,
+  // so the refresh call would silently never receive the cookie at all.
+  // "none" requires secure:true, which is already conditional above.
+  sameSite: env.nodeEnv === "production" ? "none" : "strict",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 

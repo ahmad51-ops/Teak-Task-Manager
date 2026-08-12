@@ -108,9 +108,74 @@ A phase-by-phase plan for building a full team task manager (like a mini Jira/As
 - [ ] Backend query optimization, indexing review
 
 ## Phase 19 — Deployment
-- [ ] Environment configs: dev/staging/prod (M2.5)
+- [x] Environment configs: dev/staging/prod (M2.5)
 - [ ] Deploy backend (Render/Railway) + frontend (Vercel/Netlify)
 - [ ] MongoDB Atlas production cluster + network access rules
 
 ---
+
+# Deployment Guide
+
+Architecture: **Client** (React/Vite) on **Vercel**, **Server** (Express) on **Render**, database on **MongoDB Atlas**, files on **Cloudinary**. Frontend and backend live on different domains, so the client talks to the API over `VITE_API_URL` instead of same-origin requests — see `Client/src/api/axios.js` and `Client/src/services/socket.js`.
+
+## Prerequisites
+
+- This repo pushed to GitHub (Render and Vercel both deploy from a connected repo)
+- A [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) cluster (free tier is fine) — create a database user and, under Network Access, allow `0.0.0.0/0` (Render's outbound IPs aren't static on the free plan)
+- A [Cloudinary](https://cloudinary.com/) account (cloud name, API key, API secret — already used in dev)
+- [Render](https://render.com/) and [Vercel](https://vercel.com/) accounts (both have a free tier and sign in with GitHub)
+
+## 1. Backend on Render
+
+A `render.yaml` blueprint is included at the repo root — Render can read it directly:
+
+1. Render dashboard → **New** → **Blueprint** → connect this repo → Render detects `render.yaml` and proposes a `team-task-manager-api` web service (root dir `Server`, build `npm install`, start `npm start`).
+2. It will prompt for the vars marked `sync: false` in the blueprint — fill in the table below. `JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET` are auto-generated.
+3. Deploy. Render assigns a URL like `https://team-task-manager-api.onrender.com` — you'll need it for the frontend's `VITE_API_URL` in step 2, and note it now for `CLIENT_URL` circularity below.
+
+No blueprint? Create the service manually instead: **New → Web Service**, root directory `Server`, build command `npm install`, start command `npm start`, then add the same env vars by hand.
+
+### Server environment variables
+
+| Variable | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `PORT` | Render sets this automatically — the app already reads `process.env.PORT` |
+| `MONGO_URI` | Your Atlas connection string (`mongodb+srv://...`) |
+| `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | Long random strings, unique per environment — never reuse the dev `.env` values |
+| `JWT_ACCESS_EXPIRES` / `JWT_REFRESH_EXPIRES` | `15m` / `7d` |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | From your Cloudinary dashboard |
+| `GOOGLE_CLIENT_ID` | Optional — omit to disable Google sign-in |
+| `CLIENT_URL` | Your Vercel URL, e.g. `https://team-task-manager.vercel.app` — no trailing slash. You'll only know this after step 2, so deploy the backend once, do the frontend, then come back and set this (Render redeploys automatically on env var changes). |
+
+## 2. Frontend on Vercel
+
+1. Vercel dashboard → **Add New → Project** → import this repo.
+2. Set **Root Directory** to `Client`. Vercel auto-detects the Vite framework preset (build command `vite build`, output directory `dist`).
+3. Add the environment variable below, then deploy.
+4. A `vercel.json` in `Client/` rewrites all paths to `index.html` — without it, refreshing a deep link like `/projects/<id>` would 404, since React Router handles that route client-side.
+
+### Client environment variables
+
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | Your Render backend URL from step 1, e.g. `https://team-task-manager-api.onrender.com` — no trailing slash, no `/api/v1` suffix |
+
+After the first deploy, go back to Render and set `CLIENT_URL` to this Vercel URL so CORS and the cross-origin cookie (see `authController.js`) accept requests from it.
+
+## 3. Production build
+
+`Client`'s `npm run build` (what Vercel runs) has been verified locally — it produces a `dist/` bundle with no errors. `Server` has no separate build step; `npm start` runs `src/server.js` directly under Node's native ESM support.
+
+## 4. API documentation
+
+See [`API_ENDPOINTS.md`](API_ENDPOINTS.md) for the full route reference (auth, users, projects, tasks) including auth requirements and request bodies.
+
+## 5. Screenshots
+
+_Add screenshots of the running app here once deployed (or running locally) — e.g. Dashboard, Projects board, Task detail. Not included in this pass: this environment has no display and no local MongoDB to run the full stack against._
+
+## Checkpoint
+
+Once both services are deployed and `CLIENT_URL`/`VITE_API_URL` point at each other: register an account at the Vercel URL, confirm login persists across a refresh (tests the cross-origin refresh cookie), create a project and task, and confirm the notification bell and live updates work (tests the Socket.io connection across origins).
 
