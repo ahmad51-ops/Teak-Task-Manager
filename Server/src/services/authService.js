@@ -28,6 +28,14 @@ const issueVerificationCode = async (user) => {
   user.emailVerificationExpires = new Date(Date.now() + CODE_TTL_MS);
   await user.save();
 
+  // Stopgap while Gmail deliverability is unconfirmed: this is the ONE
+  // place the real code is visible without depending on the email
+  // actually arriving. Only reachable via Render's own dashboard logs
+  // (owner-only), not exposed in any API response. Worth removing once
+  // delivery is confirmed reliable — until then, this is what actually
+  // unblocks someone who registered but never got the email.
+  console.log(`[verification code] ${user.email} -> ${code} (expires in 15 min)`);
+
   // Deliberately NOT awaited — the code is already saved, which is the
   // part that actually has to succeed before responding. Awaiting an
   // SMTP round-trip here would mean a slow or flaky mail provider (or a
