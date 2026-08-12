@@ -9,28 +9,12 @@
 
   html {
     color-scheme: dark;
-    /* Root size drives every rem-based Tailwind class (spacing, type,
-       borders), so this scales the whole UI at once rather than
-       patching sizes file by file.
-
-       It MUST be responsive: 19px was set for desktop legibility, but
-       applying that on a 375px phone inflates every padding and gap by
-       ~19% on a screen that has no room to spare — which is exactly
-       what pushed content off the right edge. Phones get the browser
-       default, and the bump only kicks in once there's width for it. */
+    /* Standard browser default — every rem-based Tailwind class
+       (spacing, type, borders) is sized against this, so a bump here
+       scales the whole UI at once. A previous desktop-legibility bump
+       (18px/19px past 768/1280px) made everything read too large in
+       practice; back to 16px everywhere. */
     font-size: 16px;
-  }
-
-  @media (min-width: 768px) {
-    html {
-      font-size: 18px;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    html {
-      font-size: 19px;
-    }
   }
 
   body {
