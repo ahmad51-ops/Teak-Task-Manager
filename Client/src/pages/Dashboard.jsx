@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { FolderKanban, ListChecks, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
@@ -5,10 +6,10 @@ import { useAuth } from "../hooks/useAuth";
 import { useDashboardStats } from "../hooks/useDashboardStats";
 
 const STAT_CONFIG = [
-  { key: "totalProjects", label: "Total projects", icon: FolderKanban, tone: "cyan" },
-  { key: "assignedTasks", label: "Assigned tasks", icon: ListChecks, tone: "violet" },
-  { key: "completedTasks", label: "Completed tasks", icon: CheckCircle2, tone: "amber" },
-  { key: "overdueTasks", label: "Overdue tasks", icon: AlertTriangle, tone: "rose" },
+  { key: "totalProjects", label: "Total projects", icon: FolderKanban, tone: "cyan", to: "/projects" },
+  { key: "assignedTasks", label: "Assigned tasks", icon: ListChecks, tone: "violet", to: "/tasks" },
+  { key: "completedTasks", label: "Completed tasks", icon: CheckCircle2, tone: "amber", to: "/tasks" },
+  { key: "overdueTasks", label: "Overdue tasks", icon: AlertTriangle, tone: "rose", to: "/tasks" },
 ];
 
 const TONE_CLASSES = {
@@ -62,20 +63,22 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading
           ? STAT_CONFIG.map((s) => <StatCardSkeleton key={s.key} />)
-          : STAT_CONFIG.map(({ key, label, icon: Icon, tone }) => (
-              <Card key={key} className="p-5">
-                <div className="mb-3">
-                  <span
-                    className={`flex h-9 w-9 items-center justify-center rounded-lg border ${TONE_CLASSES[tone]}`}
-                  >
-                    <Icon size={16} />
-                  </span>
-                </div>
-                <p className="font-display text-2xl font-semibold text-ink-primary">
-                  {stats[key]}
-                </p>
-                <p className="text-xs text-ink-muted">{label}</p>
-              </Card>
+          : STAT_CONFIG.map(({ key, label, icon: Icon, tone, to }) => (
+              <Link key={key} to={to}>
+                <Card className="h-full p-5 transition-colors hover:border-cyan-neon/30">
+                  <div className="mb-3">
+                    <span
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg border ${TONE_CLASSES[tone]}`}
+                    >
+                      <Icon size={16} />
+                    </span>
+                  </div>
+                  <p className="font-display text-2xl font-semibold text-ink-primary">
+                    {stats[key]}
+                  </p>
+                  <p className="text-xs text-ink-muted">{label}</p>
+                </Card>
+              </Link>
             ))}
       </div>
 
